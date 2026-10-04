@@ -1,0 +1,1229 @@
+@import "@fontsource/inter/400.css";
+@import "@fontsource/inter/500.css";
+@import "@fontsource/inter/600.css";
+@import "@fontsource/inter/700.css";
+@import "@fontsource/ibm-plex-mono/400.css";
+
+.fieldbook {
+    display: block;
+    width: 100%;
+    max-width: none;
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+
+    /* ========================================
+       EDUCATIONAL DESIGN SYSTEM
+       Apple-inspired / Institutional
+       ======================================== */
+
+    /* Brand */
+    --primary: #142550;
+    --primary-hover: #0F1D40;
+    --primary-light: #E9EDF6;
+
+    /* Accent */
+    --accent: #1BAEC3;
+    --accent-hover: #1595A8;
+    --accent-light: #E8F8FA;
+
+    /* Backgrounds */
+    --background: #F5F7FA;
+    --surface: #FFFFFF;
+    --surface-soft: #F8FAFC;
+
+    /* Typography */
+    --text: #172033;
+    --text-secondary: #475467;
+    --muted: #667085;
+
+    /* Borders */
+    --line: #D9E1EA;
+    --line-light: #E8ECF1;
+
+    /* Semantic */
+    --success: #16A34A;
+    --warning: #F59E0B;
+    --error: #DC2626;
+
+    /* ========================================
+       TYPOGRAPHY
+       ======================================== */
+
+    background: var(--background);
+    color: var(--text);
+
+    /*
+     * SF Pro cuando está disponible.
+     * Inter como fallback consistente entre plataformas.
+     */
+    font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "SF Pro Display",
+        "SF Pro Text",
+        "Inter",
+        "Helvetica Neue",
+        Arial,
+        sans-serif;
+
+    font-synthesis: none;
+
+    text-rendering: optimizeLegibility;
+
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+
+    /* Mejor sensación de interfaz moderna */
+    letter-spacing: -0.01em;
+    line-height: 1.5;
+}
+
+.fieldbook * {
+    box-sizing: border-box;
+}
+
+.fieldbook a {
+    color: inherit;
+    text-decoration: none;
+}
+
+
+/* ========================================
+   NAVIGATION
+   ======================================== */
+
+.fb-nav {
+    height: 72px;
+    display: flex;
+    align-items: center;
+    padding: 0 7.2%;
+
+    background: var(--surface);
+    border-bottom: 1px solid var(--line-light);
+
+    gap: 50px;
+}
+
+.fb-identity {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    color: var(--primary);
+
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: .08em;
+}
+
+.fb-identity small {
+    display: block;
+    margin-top: 3px;
+
+    color: var(--muted);
+
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 8px;
+    font-weight: 400;
+    letter-spacing: .07em;
+}
+
+.fb-signet {
+    width: 32px;
+    height: 32px;
+
+    display: grid;
+    place-items: center;
+
+    color: #FFFFFF;
+    background: var(--primary);
+
+    border-radius: 9px;
+}
+
+.fb-nav nav {
+    display: flex;
+    align-self: stretch;
+    align-items: center;
+
+    gap: 30px;
+    margin-left: auto;
+}
+
+.fb-nav nav a {
+    position: relative;
+
+    color: var(--muted);
+
+    font-size: 11px;
+    font-weight: 500;
+
+    transition:
+        color .2s ease,
+        opacity .2s ease;
+}
+
+.fb-nav nav a:hover {
+    color: var(--primary);
+}
+
+.fb-nav nav .fb-current {
+    color: var(--primary);
+    font-weight: 600;
+}
+
+.fb-current::after {
+    position: absolute;
+    content: '';
+
+    bottom: -27px;
+    left: 0;
+    right: 0;
+
+    height: 2px;
+
+    background: var(--accent);
+    border-radius: 2px;
+}
+
+
+/* ========================================
+   ACCOUNT
+   ======================================== */
+
+.fb-account {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    border: 0;
+    background: none;
+
+    color: var(--text);
+
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 500;
+
+    cursor: pointer;
+}
+
+.fb-avatar {
+    width: 27px;
+    height: 27px;
+
+    display: grid;
+    place-items: center;
+
+    color: var(--primary);
+    background: var(--primary-light);
+
+    border-radius: 50%;
+
+    font-family: inherit;
+    font-size: 10px;
+    font-weight: 600;
+}
+
+
+/* ========================================
+   HERO / COVER
+   ======================================== */
+
+.fb-cover {
+    position: relative;
+
+    min-height: 538px;
+    padding: 64px 11.4% 46px;
+
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+
+    gap: 5.5%;
+
+    overflow: hidden;
+
+    background-color: var(--surface);
+    border-bottom: 1px solid var(--line);
+
+    background-image:
+        radial-gradient(
+            rgba(20, 37, 80, .08) .6px,
+            transparent .6px
+        );
+
+    background-size: 16px 16px;
+}
+
+.fb-cover-copy {
+    position: relative;
+    z-index: 2;
+
+    padding-bottom: 19px;
+}
+
+.fb-edition,
+.fb-kicker,
+.plate-index,
+.plate-callout,
+.plate-coordinates,
+.plate-scale,
+.plate-core span,
+.fb-section-top,
+.note-meta,
+.note-corner,
+.fb-all-notes,
+.fb-footer {
+    font-family: 'IBM Plex Mono', monospace;
+}
+
+.fb-edition {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+
+    color: var(--muted);
+
+    font-size: 9px;
+    letter-spacing: .045em;
+}
+
+.fb-edition span {
+    color: var(--accent);
+}
+
+.fb-edition i {
+    width: 24px;
+    height: 1px;
+
+    background: var(--line);
+}
+
+.fb-kicker {
+    margin: 56px 0 15px;
+
+    color: var(--accent);
+
+    font-size: 9px;
+    letter-spacing: .12em;
+}
+
+
+/* ========================================
+   HEADINGS
+   ======================================== */
+
+.fb-cover h1,
+.fb-practice-intro h2 {
+    margin: 0;
+
+    color: var(--primary);
+
+    font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Inter",
+        "SF Pro Display",
+        "SF Pro Text",
+        "Helvetica Neue",
+        Arial,
+        sans-serif;
+
+    font-weight: 600;
+    letter-spacing: -.045em;
+    line-height: .98;
+}
+
+.fb-cover h1 {
+    font-size: clamp(44px, 5.1vw, 69px);
+}
+
+.fb-practice-intro h2 {
+    font-size: 39px;
+}
+
+.fb-cover h1 em,
+.fb-practice-intro h2 em {
+    color: var(--accent);
+    font-style: normal;
+    font-weight: 600;
+}
+
+
+/* ========================================
+   INTRO
+   ======================================== */
+
+.fb-intro {
+    max-width: 360px;
+
+    margin: 21px 0 22px;
+
+    color: var(--text-secondary);
+
+    font-size: 13px;
+    line-height: 1.75;
+}
+
+
+/* ========================================
+   PRIMARY BUTTON
+   ======================================== */
+
+.fb-start {
+    display: inline-flex;
+    align-items: center;
+    gap: 20px;
+
+    padding: 12px 15px;
+
+    color: #FFFFFF !important;
+    background: var(--primary);
+
+    border-radius: 7px;
+
+    font-size: 11px;
+    font-weight: 500;
+
+    transition:
+        background .2s ease,
+        transform .2s ease;
+}
+
+.fb-start:hover {
+    background: var(--primary-hover);
+    transform: translateY(-1px);
+}
+
+.fb-start svg {
+    color: var(--accent);
+}
+
+.fb-handwritten {
+    margin: 16px 0 0 117px;
+
+    color: var(--muted);
+
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    font-style: italic;
+
+    transform: rotate(-2deg);
+}
+
+
+/* ========================================
+   SCIENTIFIC PLATE
+   ======================================== */
+
+.fb-plate {
+    height: 350px;
+    max-width: 440px;
+    width: 100%;
+
+    justify-self: end;
+
+    position: relative;
+    overflow: hidden;
+
+    color: var(--primary);
+
+    background: var(--surface-soft);
+
+    border: 1px solid var(--line);
+
+    background-image:
+        linear-gradient(
+            90deg,
+            transparent 49.8%,
+            var(--line) 50%,
+            transparent 50.2%
+        ),
+        linear-gradient(
+            transparent 49.8%,
+            var(--line) 50%,
+            transparent 50.2%
+        );
+
+    background-size: 44px 44px;
+}
+
+.plate-index {
+    position: absolute;
+
+    top: 16px;
+    left: 17px;
+    right: 17px;
+
+    display: flex;
+    justify-content: space-between;
+
+    color: var(--accent);
+
+    font-size: 8px;
+    letter-spacing: .04em;
+}
+
+.plate-index span {
+    color: var(--muted);
+}
+
+.orbit {
+    position: absolute;
+
+    border: 1px solid rgba(20, 37, 80, .28);
+    border-radius: 50%;
+
+    left: 50%;
+    top: 49%;
+
+    transform: translate(-50%, -50%);
+}
+
+.orbit-one {
+    width: 181px;
+    height: 181px;
+}
+
+.orbit-two {
+    width: 235px;
+    height: 235px;
+
+    border-style: dashed;
+    opacity: .72;
+}
+
+.orbit-three {
+    width: 290px;
+    height: 290px;
+
+    border-color: rgba(20, 37, 80, .16);
+}
+
+.plate-core {
+    position: absolute;
+
+    top: 49%;
+    left: 50%;
+
+    transform: translate(-50%, -50%);
+
+    height: 75px;
+    width: 75px;
+
+    display: grid;
+    align-content: center;
+    justify-items: center;
+
+    gap: 4px;
+
+    color: var(--accent);
+
+    background: var(--surface);
+
+    border: 1px solid var(--accent);
+    border-radius: 50%;
+}
+
+.plate-core span {
+    font-size: 7px;
+    letter-spacing: .12em;
+}
+
+.node {
+    position: absolute;
+
+    width: 10px;
+    height: 10px;
+
+    border-radius: 50%;
+
+    background: var(--accent);
+
+    border: 2px solid var(--surface);
+
+    box-shadow:
+        0 0 0 1px var(--accent);
+}
+
+.node-a {
+    left: calc(50% - 3px);
+    top: calc(49% - 94px);
+}
+
+.node-b {
+    left: calc(50% + 115px);
+    top: calc(49% - 30px);
+
+    background: var(--primary);
+
+    box-shadow:
+        0 0 0 1px var(--primary);
+}
+
+.node-c {
+    left: calc(50% - 102px);
+    top: calc(49% + 93px);
+
+    background: var(--primary);
+
+    box-shadow:
+        0 0 0 1px var(--primary);
+}
+
+.node-d {
+    left: calc(50% - 148px);
+    top: calc(49% - 9px);
+}
+
+.plate-wave {
+    position: absolute;
+
+    right: 19px;
+    bottom: 51px;
+
+    display: flex;
+    align-items: center;
+
+    gap: 7px;
+
+    color: var(--muted);
+}
+
+.plate-wave span {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 8px;
+}
+
+.wave-dash {
+    color: var(--accent);
+}
+
+.plate-callout {
+    position: absolute;
+
+    display: flex;
+    align-items: center;
+
+    gap: 6px;
+
+    color: var(--muted);
+
+    font-size: 7px;
+    letter-spacing: .02em;
+}
+
+.plate-callout span {
+    width: 15px;
+    height: 15px;
+
+    display: grid;
+    place-items: center;
+
+    border-radius: 50%;
+
+    background: var(--accent);
+    color: #FFFFFF;
+}
+
+.callout-a {
+    top: 87px;
+    right: 18px;
+}
+
+.callout-b {
+    bottom: 83px;
+    left: 18px;
+}
+
+.plate-coordinates {
+    position: absolute;
+
+    bottom: 15px;
+    left: 18px;
+
+    color: var(--muted);
+
+    font-size: 7px;
+    line-height: 1.7;
+}
+
+.plate-scale {
+    position: absolute;
+
+    right: 19px;
+    bottom: 18px;
+
+    display: flex;
+    align-items: center;
+
+    gap: 6px;
+
+    color: var(--muted);
+
+    font-size: 7px;
+}
+
+.plate-scale i {
+    width: 32px;
+    height: 4px;
+
+    border: 1px solid var(--muted);
+    border-top: 0;
+}
+
+.plate-orbit-icon {
+    position: absolute;
+
+    right: 18px;
+    top: 46px;
+
+    color: var(--accent);
+}
+
+
+/* ========================================
+   COVER FOOTER
+   ======================================== */
+
+.fb-cover-foot {
+    position: absolute;
+
+    bottom: 17px;
+    left: 11.4%;
+    right: 11.4%;
+
+    display: flex;
+    justify-content: space-between;
+
+    color: var(--muted);
+
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 8px;
+    letter-spacing: .05em;
+}
+
+.fb-cover-foot i {
+    display: inline-block;
+
+    width: 5px;
+    height: 5px;
+
+    border-radius: 50%;
+
+    background: var(--accent);
+
+    vertical-align: 1px;
+}
+
+
+/* ========================================
+   PRACTICE SECTION
+   ======================================== */
+
+.fb-practice {
+    padding: 49px 11.4% 36px;
+
+    background: var(--background);
+}
+
+.fb-section-top {
+    display: flex;
+    justify-content: space-between;
+
+    padding-bottom: 12px;
+
+    color: var(--muted);
+
+    border-bottom: 1px solid var(--line);
+
+    font-size: 8px;
+    letter-spacing: .04em;
+}
+
+.fb-section-top p {
+    margin: 0;
+}
+
+.fb-section-top p:first-child span {
+    margin-right: 12px;
+
+    color: var(--accent);
+}
+
+.fb-practice-intro {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+
+    gap: 30px;
+
+    padding: 26px 0 25px;
+}
+
+.fb-practice-intro > p {
+    max-width: 300px;
+
+    margin: 0 1% 3px 0;
+
+    color: var(--text-secondary);
+
+    font-size: 12px;
+    line-height: 1.75;
+}
+
+
+/* ========================================
+   NOTES / COURSES
+   ======================================== */
+
+.fb-notes {
+    display: grid;
+
+    grid-template-columns: repeat(3, 1fr);
+
+    gap: 23px;
+}
+
+.fb-note {
+    min-width: 0;
+}
+
+.note-art {
+    height: 129px;
+
+    position: relative;
+
+    display: grid;
+    place-items: center;
+
+    overflow: hidden;
+
+    border-radius: 8px;
+}
+
+
+/* Soft educational colors */
+
+.paper-red {
+    color: var(--primary);
+    background: #E8F8FA;
+}
+
+.paper-blue {
+    color: var(--primary);
+    background: #E9EDF6;
+}
+
+.paper-olive {
+    color: #52635F;
+    background: #EEF2EA;
+}
+
+.note-corner {
+    position: absolute;
+
+    top: 10px;
+    left: 11px;
+
+    color: currentColor;
+
+    font-size: 7px;
+    letter-spacing: .06em;
+
+    opacity: .7;
+}
+
+.note-art > i {
+    position: absolute;
+
+    width: 105px;
+    height: 1px;
+
+    background: currentColor;
+
+    transform: rotate(-28deg);
+
+    opacity: .25;
+}
+
+.note-art > svg {
+    stroke-width: 1.25;
+}
+
+.signal-line {
+    position: absolute;
+
+    width: 67%;
+    height: 1px;
+
+    background: var(--primary);
+
+    transform: rotate(-19deg);
+
+    opacity: .35;
+}
+
+.signal-line.short {
+    width: 38%;
+
+    transform: rotate(34deg);
+
+    opacity: .2;
+}
+
+.note-art:has(.signal-line) > svg {
+    z-index: 1;
+
+    padding: 7px;
+
+    width: 55px;
+    height: 55px;
+
+    background: var(--surface);
+
+    border-radius: 50%;
+}
+
+.note-art:has(svg:last-child) > svg:last-child {
+    position: absolute;
+
+    right: 28%;
+    top: 27%;
+
+    color: var(--accent);
+
+    stroke-width: 1;
+}
+
+
+/* ========================================
+   NOTE META
+   ======================================== */
+
+.note-meta {
+    display: flex;
+    justify-content: space-between;
+
+    gap: 8px;
+
+    margin: 13px 0 7px;
+
+    color: var(--muted);
+
+    font-size: 7px;
+    letter-spacing: .025em;
+}
+
+.fb-note h3 {
+    display: flex;
+    align-items: center;
+
+    gap: 8px;
+
+    margin: 0;
+    padding-bottom: 11px;
+
+    color: var(--primary);
+
+    border-bottom: 1px solid var(--line);
+
+    font-family: 'Inter', sans-serif;
+    font-size: 17px;
+    font-weight: 500;
+
+    letter-spacing: -.02em;
+}
+
+.fb-note h3 > span {
+    color: var(--accent);
+
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+}
+
+.fb-note h3 > svg {
+    margin-left: auto;
+
+    color: var(--muted);
+
+    transition: transform .2s ease;
+}
+
+.fb-note:hover h3 > svg {
+    transform: translateX(3px);
+}
+
+
+/* ========================================
+   ALL NOTES
+   ======================================== */
+
+.fb-all-notes {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    margin-top: 24px;
+
+    color: var(--muted);
+
+    font-size: 8px;
+    letter-spacing: .035em;
+}
+
+.fb-all-notes a {
+    display: flex;
+    align-items: center;
+
+    gap: 11px;
+
+    color: var(--primary);
+
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.fb-all-notes a svg {
+    color: var(--accent);
+}
+
+
+/* ========================================
+   FOOTER
+   ======================================== */
+
+.fb-footer {
+    display: flex;
+    justify-content: space-between;
+
+    padding: 17px 11.4%;
+
+    background: var(--surface);
+
+    border-top: 1px solid var(--line);
+
+    color: var(--muted);
+
+    font-size: 7px;
+    letter-spacing: .05em;
+}
+
+.fb-footer span {
+    display: flex;
+    align-items: center;
+
+    gap: 9px;
+}
+
+.fb-footer i {
+    color: var(--accent);
+
+    font-style: normal;
+}
+
+.fb-footer svg {
+    color: var(--accent);
+}
+
+
+/* ========================================
+   MOBILE — 760px
+   ======================================== */
+
+@media (max-width: 760px) {
+
+    .fb-nav {
+        height: 62px;
+
+        padding: 0 18px;
+
+        gap: 0;
+    }
+
+    .fb-nav nav {
+        gap: 14px;
+
+        margin-right: 14px;
+    }
+
+    .fb-nav nav a {
+        font-size: 9px;
+    }
+
+    .fb-account > span:not(.fb-avatar) {
+        display: none;
+    }
+
+    .fb-cover {
+        grid-template-columns: 1fr;
+
+        padding: 44px 8% 48px;
+
+        gap: 31px;
+    }
+
+    .fb-kicker {
+        margin-top: 37px;
+    }
+
+    .fb-cover h1 {
+        font-size: 55px;
+    }
+
+    .fb-plate {
+        justify-self: center;
+
+        max-width: 440px;
+        height: 310px;
+    }
+
+    .fb-cover-foot {
+        left: 8%;
+        right: 8%;
+    }
+
+    .fb-practice {
+        padding: 37px 8% 29px;
+    }
+
+    .fb-practice-intro h2 {
+        font-size: 33px;
+    }
+
+    .fb-notes {
+        gap: 13px;
+    }
+
+    .note-art {
+        height: 105px;
+    }
+
+    .fb-note h3 {
+        font-size: 14px;
+    }
+
+    .fb-footer {
+        padding-inline: 8%;
+    }
+}
+
+
+/* ========================================
+   MOBILE — 520px
+   ======================================== */
+
+@media (max-width: 520px) {
+
+    .fb-nav {
+        padding-inline: 12px;
+    }
+
+    .fb-identity {
+        font-size: 10px;
+    }
+
+    .fb-identity small {
+        font-size: 7px;
+    }
+
+    .fb-nav nav {
+        gap: 10px;
+
+        margin-left: auto;
+        margin-right: 9px;
+    }
+
+    .fb-nav nav a {
+        font-size: 8px;
+    }
+
+    .fb-account {
+        padding: 0;
+    }
+
+    .fb-account svg {
+        display: none;
+    }
+
+    .fb-cover {
+        padding: 34px 7% 46px;
+    }
+
+    .fb-cover h1 {
+        font-size: 49px;
+    }
+
+    .fb-intro {
+        font-size: 12px;
+    }
+
+    .fb-plate {
+        height: 285px;
+    }
+
+    .callout-a {
+        right: 7px;
+    }
+
+    .fb-practice {
+        padding-inline: 7%;
+    }
+
+    .fb-section-top {
+        font-size: 7px;
+    }
+
+    .fb-practice-intro {
+        align-items: start;
+
+        flex-direction: column;
+
+        gap: 11px;
+    }
+
+    .fb-practice-intro h2 {
+        font-size: 34px;
+    }
+
+    .fb-practice-intro > p {
+        max-width: 330px;
+    }
+
+    .fb-notes {
+        grid-template-columns: 1fr;
+
+        gap: 21px;
+    }
+
+    .note-art {
+        height: 150px;
+    }
+
+    .fb-note h3 {
+        font-size: 18px;
+    }
+
+    .fb-all-notes {
+        align-items: flex-start;
+
+        gap: 13px;
+
+        flex-direction: column;
+    }
+
+    .fb-footer {
+        padding-inline: 7%;
+
+        gap: 12px;
+
+        font-size: 6px;
+    }
+
+    .fb-footer span {
+        gap: 4px;
+    }
+}

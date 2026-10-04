@@ -1,0 +1,49 @@
+.edu-password-form {
+    max-width: 470px;
+    display: grid;
+    gap: 15px;
+    padding: 22px
+}
+
+.edu-password-form label {
+    display: grid;
+    gap: 6px;
+    color: var(--campus-muted);
+    font-size: 10px
+}
+
+.edu-password-form .ui-button {
+    justify-self: start;
+    margin-top: 5px
+}
+
+.edu-row-actions {
+    display: grid;
+    gap: 3px;
+    justify-items: start
+}
+
+.edu-class-actions {
+    display: flex;
+    gap: 9px;
+    flex-wrap: wrap
+}
+
+.edu-class-actions button {
+    padding: 2px 0;
+    border: 0;
+    background: none;
+    color: var(--campus-green);
+    font-size: 8px;
+    cursor: pointer
+}
+
+.edu-roster-select {
+    min-height: 220px !important;
+    padding: 7px !important
+}
+
+.edu-roster-select option {
+    padding: 7px;
+    color: var(--campus-ink)
+}
