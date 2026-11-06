@@ -10,7 +10,7 @@ from app.models import SystemSetting
 DEFAULTS: dict[str, tuple[Any, str]] = {
     "school_timezone": ("America/Guayaquil", "Zona horaria local del colegio"),
     "session_ttl_hours": (12, "Duración máxima de las sesiones"),
-    "scoreboard_enabled": (True, "Visibilidad general del scoreboard"),
+    "scoreboard_enabled": (False, "Ranking visible para estudiantes (desactivado por defecto; el personal siempre lo ve)"),
     "max_attempts_global": (20, "Intentos máximos por reto y estudiante"),
     "submission_rate_limit": (8, "Límite por estudiante y ráfaga compartida por IP cada 60 segundos"),
 }

@@ -4,7 +4,10 @@
 
 - Contraseñas con Argon2id; cookies de sesión `HttpOnly`, `SameSite=Lax` y `Secure` cuando la petición externa usa HTTPS.
 - No hay política CORS permisiva: frontend y API comparten origen; cualquier origen adicional debe ser institucional, específico y habilitarse con credenciales solo cuando sea necesario.
-- Token CSRF requerido en operaciones que cambian estado; permisos por rol y alcance docente comprobados en el servidor.
+- Token CSRF requerido en operaciones que cambian estado; permisos por rol y alcance docente comprobados en el servidor: un docente solo lee y modifica eventos que incluyen alguna de sus clases, no puede retirar clases de otros docentes de un evento compartido, solo reorganiza estudiantes que ya están en sus clases y la importación CSV solo usa sus propias clases.
+- Una contraseña temporal (alta, importación o restablecimiento) solo permite consultar la sesión y cambiarla: el resto de la API responde `403 PASSWORD_CHANGE_REQUIRED`. Cambiar la contraseña cierra las demás sesiones de esa cuenta.
+- Nadie puede desactivar su propia cuenta ni al último administrador activo, y los permisos del rol ADMIN no se pueden recortar.
+- Todos los errores, incluidos 404 de rutas inexistentes y 500 inesperados, usan el formato `{"error": {"code", "message", "details"}}`; los 500 no devuelven detalles internos.
 - Sesiones con token aleatorio, persistidas como hash; la tarea de mantenimiento elimina sesiones expiradas hace más de siete días y sesiones revocadas antiguas.
 - Los envíos de bandera se validan en backend. Los registros de contraseñas estáticas de bandera se guardan como hash; las respuestas estudiantiles no revelan valores privados.
 - Nginx añade CSP, `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy` y `Permissions-Policy`; limita solicitudes a 21 MB.
@@ -22,7 +25,7 @@
 
 ## Límites conocidos
 
-- Los limitadores de login y envíos viven en memoria por proceso; reiniciar el backend los reinicia y varias réplicas no comparten los contadores. Los envíos limitan por estudiante y aplican una ráfaga mínima de 60 por IP compartida; login admite 8 por usuario y 120 por IP cada cinco minutos. Si se escala horizontalmente, añade almacenamiento compartido.
+- Los limitadores de login y envíos viven en memoria por proceso; reiniciar el backend los reinicia y varias réplicas no comparten los contadores. Los envíos limitan por estudiante y aplican una ráfaga mínima de 60 por IP. Login cuenta solo intentos **fallidos**: 8 por combinación equipo+usuario y 120 por equipo cada cinco minutos; un acceso correcto reinicia el contador de esa combinación, y los fallos desde otro equipo no bloquean al titular de la cuenta. Si se escala horizontalmente, añade almacenamiento compartido.
 - Nginx usa HTTP en el Compose base. `Secure` en cookies se activa cuando el gateway entrega `X-Forwarded-Proto: https`; Nginx lo pasa a la API, así que solo debe confiarse ese encabezado desde el proxy institucional de confianza.
 - El health check confirma disponibilidad de API y base de datos, no sustituye monitoreo, alertas ni verificación periódica de restauraciones.
 - `APP_ENV=production` no configura por sí solo TLS, firewall, rotación externa de registros ni gestión de secretos.

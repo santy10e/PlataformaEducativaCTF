@@ -117,3 +117,21 @@ def test_analytics_aggregates_synthetic_class_of_500_and_50k_submissions(db: DbS
     assert report["summary"]["attempts"] == 50_000
     assert report["summary"]["completed"] == 500
     assert report["summary"]["failed_attempts"] == 49_500
+
+
+def test_spreadsheet_and_pdf_exports_keep_zero_values(db: DbSession) -> None:
+    from io import BytesIO
+    from zipfile import ZipFile
+
+    instructor = make_user(db, "zero_teacher", "INSTRUCTOR")
+    student = make_user(db, "zero_student", "STUDENT")
+    school_class = SchoolClass(name="Aula cero", teacher_user_id=instructor.id, students=[student])
+    db.add(school_class)
+    db.flush()
+
+    xlsx = export(class_id=school_class.id, actor=instructor, db=db, format="xlsx")
+    sheet = ZipFile(BytesIO(xlsx.body)).read("xl/worksheets/sheet1.xml").decode()
+    # started, completed, attempts, hints and score are all 0 for an inactive learner, not blank cells.
+    assert sheet.count("<t>0</t>") >= 5
+    pdf = export(class_id=school_class.id, actor=instructor, db=db, format="pdf")
+    assert b"| 0 | 0 | 0 | 0 | 0 |" in pdf.body

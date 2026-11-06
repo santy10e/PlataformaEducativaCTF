@@ -81,7 +81,7 @@ def export(class_id: int | None = None, event_id: int | None = None, student_id:
         writer.writerows({key: _spreadsheet_safe(value) for key, value in row.items()} for row in export_rows)
         return Response("\ufeff" + stream.getvalue(), media_type="text/csv; charset=utf-8", headers={"Content-Disposition": "attachment; filename=cyberlab-results.csv"})
     if format == "xlsx":
-        rows = [columns] + [[str(row.get(col) or "") for col in columns] for row in export_rows]
+        rows = [columns] + [[("" if row.get(col) is None else str(row.get(col))) for col in columns] for row in export_rows]
         xml_rows = []
         for ridx, row in enumerate(rows, 1):
             cells = "".join(f'<c r="{chr(64 + cidx)}{ridx}" t="inlineStr"><is><t>{escape(str(value))}</t></is></c>' for cidx, value in enumerate(row, 1))
@@ -96,7 +96,7 @@ def export(class_id: int | None = None, event_id: int | None = None, student_id:
             book.writestr("xl/worksheets/sheet1.xml", sheet)
         return Response(output.getvalue(), media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", headers={"Content-Disposition": "attachment; filename=cyberlab-results.xlsx"})
     lines = ["CYBERLAB - Resultados", str(data["scope"]["name"]), "", " | ".join(columns)]
-    lines.extend(" | ".join(str(row.get(col) or "") for col in columns) for row in export_rows)
+    lines.extend(" | ".join(("" if row.get(col) is None else str(row.get(col))) for col in columns) for row in export_rows)
     def pdf_line(line: str) -> str:
         return line.replace("\\", "\\\\").replace("(", "\\(").replace(")", "\\)")
     chunks = [lines[index:index + 55] for index in range(0, len(lines), 55)] or [[]]

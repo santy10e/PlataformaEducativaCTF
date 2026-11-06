@@ -6,6 +6,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.admin import router as admin_router
 from app.auth import router as auth_router
@@ -13,7 +14,10 @@ from app.classes_api import router as classes_router
 from app.config import settings
 from app.ctf_api import router as ctf_router
 from app.database import check_database
+from app.errors import ApiError
 from app.maintenance import cleanup_once
+from app.modules.curriculum.router import learn as learn_router
+from app.modules.curriculum.router import staff as curriculum_router
 from app.scoring_api import router as scoring_router
 from app.teaching_api import router as teaching_router
 from app.users_api import router as users_router
@@ -53,12 +57,22 @@ app.include_router(classes_router)
 app.include_router(ctf_router)
 app.include_router(scoring_router)
 app.include_router(teaching_router)
+app.include_router(curriculum_router)
+app.include_router(learn_router)
 
 
-@app.exception_handler(HTTPException)
-async def http_error(request: Request, exc: HTTPException) -> JSONResponse:
-    codes = {401: "AUTHENTICATION_REQUIRED", 403: "ACCESS_DENIED", 404: "RESOURCE_NOT_FOUND", 409: "CONFLICT", 422: "VALIDATION_ERROR", 429: "RATE_LIMITED"}
-    return JSONResponse(status_code=exc.status_code, content={"error": {"code": codes.get(exc.status_code, "REQUEST_FAILED"), "message": str(exc.detail), "details": {}}}, headers=exc.headers)
+@app.exception_handler(StarletteHTTPException)
+async def http_error(request: Request, exc: StarletteHTTPException) -> JSONResponse:
+    codes = {401: "AUTHENTICATION_REQUIRED", 403: "ACCESS_DENIED", 404: "RESOURCE_NOT_FOUND", 405: "METHOD_NOT_ALLOWED", 409: "CONFLICT", 422: "VALIDATION_ERROR", 429: "RATE_LIMITED"}
+    code = exc.code if isinstance(exc, ApiError) else codes.get(exc.status_code, "REQUEST_FAILED")
+    return JSONResponse(status_code=exc.status_code, content={"error": {"code": code, "message": str(exc.detail), "details": {}}}, headers=exc.headers)
+
+
+@app.exception_handler(Exception)
+async def unexpected_error(request: Request, exc: Exception) -> JSONResponse:
+    # Details stay in the server log; clients only get a stable code.
+    logger.error("Unhandled error on %s %s", request.method, request.url.path, exc_info=exc)
+    return JSONResponse(status_code=500, content={"error": {"code": "INTERNAL_ERROR", "message": "unexpected server error", "details": {}}})
 
 
 @app.exception_handler(RequestValidationError)

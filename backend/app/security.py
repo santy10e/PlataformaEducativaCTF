@@ -54,7 +54,11 @@ def authenticate(db: DbSession, username: str, password: str, ip: str | None, us
 
 
 class LoginRateLimiter:
-    """Replaceable in-memory sliding-window limiter; use shared storage when horizontally scaled."""
+    """Replaceable in-memory sliding-window limiter; use shared storage when horizontally scaled.
+
+    Login records only failed attempts (`allow` after a bad password, `reset` after a good one) so a
+    successful sign-in never consumes allowance and a stranger cannot lock out someone else's account
+    from another address."""
 
     def __init__(self, limit: int = 8, window_seconds: int = 300, ip_limit: int | None = None, max_keys: int = 10_000) -> None:
         self.limit = limit
@@ -84,6 +88,23 @@ class LoginRateLimiter:
                 self.attempts[key] = recent
             self._trim(current)
             return accepted
+
+    def blocked(self, *keys: str, now: float | None = None) -> bool:
+        """True when any key already used up its allowance; records nothing."""
+        import time
+
+        current = time.monotonic() if now is None else now
+        with self._lock:
+            for key in keys:
+                key_limit = self.ip_limit if key.startswith("ip:") else self.limit
+                if sum(1 for stamp in self.attempts.get(key, []) if current - stamp < self.window_seconds) >= key_limit:
+                    return True
+        return False
+
+    def reset(self, *keys: str) -> None:
+        with self._lock:
+            for key in keys:
+                self.attempts.pop(key, None)
 
     def _trim(self, current: float) -> None:
         if len(self.attempts) < self.max_keys or current - self._last_trim < 60:

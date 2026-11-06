@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowDownToLine,
@@ -1133,6 +1133,7 @@ export function ImportPage() {
 
 export function ChangePasswordPage() {
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const [error, setError] = useState("");
   const form = useForm<{
     current_password: string;
@@ -1147,6 +1148,7 @@ export function ChangePasswordPage() {
     onSuccess: async () => {
       await qc.invalidateQueries({ queryKey: ["session"] });
       toast("Contraseña actualizada.");
+      navigate("/workspace", { replace: true });
     },
   });
   return (

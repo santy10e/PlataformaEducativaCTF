@@ -48,7 +48,7 @@ export function ChallengeImporterPage() {
   }
 
   return <div className="challenge-importer">
-    <div className="workspace-edition"><span>DOCENCIA &nbsp;/&nbsp; BIBLIOTECA DE RETOS</span><span>FASE 09</span></div>
+    <div className="workspace-edition"><span>DOCENCIA &nbsp;/&nbsp; BIBLIOTECA DE RETOS</span><span>PAQUETES ZIP VALIDADOS</span></div>
     <header className="workspace-page-heading"><p className="page-eyebrow">PAQUETES PORTABLES · YAML + ZIP</p><h1>Importar una práctica</h1><p>Revisa el contenido antes de incorporarlo. Los retos importados quedan como borradores.</p></header>
     <section className="import-card">
       <div className="import-steps"><span className={!preview?"active":"done"}>01 · Subir</span><span className={preview?"active":""}>02 · Revisar</span><span>03 · Confirmar</span></div>

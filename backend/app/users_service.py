@@ -74,10 +74,8 @@ def create_user(
 ) -> User:
     actor_roles = user_roles(actor)
     role_name = role_name.upper()
-    if role_name not in {"STUDENT", "INSTRUCTOR"} and "ADMIN" not in actor_roles:
+    if role_name != "STUDENT" and "ADMIN" not in actor_roles:
         raise PermissionError("instructors may only create students")
-    if role_name == "ADMIN" and "ADMIN" not in actor_roles:
-        raise PermissionError("only administrators may create administrators")
     if db.scalar(select(User.id).where(User.username == username)) is not None:
         raise ValueError("username already exists")
     if email and db.scalar(select(User.id).where(User.email == email)) is not None:
@@ -131,6 +129,15 @@ def update_user(db: DbSession, user: User, *, first_name: str, last_name: str, e
         profile.first_name = first_name
         profile.last_name = last_name
     return user
+
+
+def ensure_can_deactivate(db: DbSession, user: User, actor: User) -> None:
+    if user.id == actor.id:
+        raise ValueError("you cannot deactivate your own account")
+    if "ADMIN" in user_roles(user) and user.is_active:
+        active_admins = db.scalar(select(func.count(func.distinct(User.id))).join(User.roles).where(Role.name == "ADMIN", User.is_active.is_(True))) or 0
+        if active_admins <= 1:
+            raise ValueError("the last active administrator cannot be deactivated")
 
 
 def deactivate_user(db: DbSession, user: User) -> None:

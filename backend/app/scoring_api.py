@@ -7,7 +7,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app import audit
-from app.ctf_service import get_event, list_challenges
+from app.ctf_service import enabled_flag_count, get_event, list_challenges
 from app.dependencies import get_db, require_csrf, require_permission
 from app.models import (
     Challenge,
@@ -18,11 +18,13 @@ from app.models import (
     Hint,
     HintUse,
     Notification,
+    ScoreboardFreeze,
     User,
     XpTransaction,
 )
 from app.scoring_service import (
     add_flag,
+    elapsed_seconds,
     freeze_scoreboard,
     get_scoreboard,
     grade_for_score,
@@ -78,8 +80,9 @@ def student_summary(actor: User = Depends(require_permission("challenge.submit")
     _student(actor)
     progress = list(db.scalars(select(ChallengeProgress).where(ChallengeProgress.user_id == actor.id)).all())
     solved = [row for row in progress if row.completed_at is not None]
-    durations = [cast(int, progress_for_student(db, actor, challenge)["elapsed_seconds"]) for row in progress if (challenge := db.get(Challenge, row.challenge_id)) is not None]
-    solved_durations = [cast(int, progress_for_student(db, actor, challenge)["elapsed_seconds"]) for row in solved if (challenge := db.get(Challenge, row.challenge_id)) is not None]
+    # Pure arithmetic over the rows already loaded: no per-challenge queries.
+    durations = [elapsed_seconds(row) for row in progress]
+    solved_durations = [elapsed_seconds(row) for row in solved]
     xp = int(db.scalar(select(func.coalesce(func.sum(XpTransaction.points), 0)).where(XpTransaction.user_id == actor.id)) or 0)
     attempts = int(db.scalar(select(func.count()).select_from(ChallengeSubmission).where(ChallengeSubmission.user_id == actor.id)) or 0)
     hints = int(db.scalar(select(func.count()).select_from(HintUse).where(HintUse.user_id == actor.id)) or 0)
@@ -154,6 +157,8 @@ def delete_flag(event_id: int, challenge_id: int, flag_id: int, actor: User = De
     flag = db.scalar(select(ChallengeFlag).where(ChallengeFlag.id == flag_id, ChallengeFlag.challenge_id == item.id))
     if flag is None:
         raise HTTPException(404, "flag not found")
+    if item.status == "PUBLISHED" and flag.enabled and enabled_flag_count(db, item.id) <= 1:
+        raise HTTPException(409, "a published challenge needs at least one flag")
     db.delete(flag)
     audit.log(db, "CHALLENGE_FLAG_DELETED", actor.id, "challenge", item.public_id, {"flag_id": flag.id})
     db.commit()
@@ -298,7 +303,8 @@ def _save_grade_scale(db: Session, actor: User, item_id: int | None, payload: Gr
 
 @router.get("/scoreboard")
 def scoreboard(scope: Literal["GLOBAL", "CLASS", "EVENT"] = Query(default="GLOBAL"), scope_id: str = Query(default="0", max_length=64), actor: User = Depends(require_permission("scoreboard.view")), db: Session = Depends(get_db)) -> dict[str, object]:
-    if not get_setting(db, "scoreboard_enabled"):
+    # The switch hides rankings from learners; staff still need them to follow their classes.
+    if not get_setting(db, "scoreboard_enabled") and "STUDENT" in user_roles(actor):
         raise HTTPException(403, "scoreboard is disabled")
     if scope == "EVENT":
         event = db.scalar(select(CtfEvent).where(CtfEvent.public_id == scope_id))
@@ -325,8 +331,11 @@ def scoreboard(scope: Literal["GLOBAL", "CLASS", "EVENT"] = Query(default="GLOBA
                 raise HTTPException(404, "class not found")
     elif scope == "GLOBAL" and "INSTRUCTOR" in user_roles(actor) and "ADMIN" not in user_roles(actor):
         raise HTTPException(403, "instructors must select an assigned class or event")
+    if scope == "GLOBAL":
+        scope_id = "0"
     rows = get_scoreboard(db, scope, scope_id)
-    return {"scope": scope, "scope_id": scope_id, "items": [{**row, "grade": grade_for_score(db, cast(int, row["score"]))} for row in rows]}
+    frozen = db.get(ScoreboardFreeze, (scope, scope_id)) is not None
+    return {"scope": scope, "scope_id": scope_id, "frozen": frozen, "items": [{**row, "grade": grade_for_score(db, cast(int, row["score"]))} for row in rows]}
 
 
 @router.post("/scoreboard/freeze", dependencies=[Depends(require_csrf)])

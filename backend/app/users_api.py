@@ -15,6 +15,7 @@ from app.security import hash_password
 from app.users_service import (
     create_user,
     deactivate_user,
+    ensure_can_deactivate,
     get_visible_user,
     list_users,
     serialize_user,
@@ -207,6 +208,10 @@ def set_user_status(
     if user is None:
         raise HTTPException(status_code=404, detail="user not found")
     if not payload.is_active:
+        try:
+            ensure_can_deactivate(db, user, actor)
+        except ValueError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
         deactivate_user(db, user)
     else:
         user.is_active = True

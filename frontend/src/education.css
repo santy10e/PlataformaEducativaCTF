@@ -47,3 +47,249 @@
     padding: 7px;
     color: var(--campus-ink)
 }
+/* Administration, staff scoreboard and help (tokens only, no ad hoc colours) */
+.workspace-shortcuts {
+    display: grid;
+    gap: 2px;
+    margin-top: 16px
+}
+
+.workspace-shortcuts a {
+    display: flex;
+    gap: 11px;
+    align-items: flex-start;
+    padding: 9px 4px;
+    border-bottom: 1px solid var(--campus-line);
+    color: var(--campus-ink);
+    text-decoration: none
+}
+
+.workspace-shortcuts a:hover,
+.workspace-shortcuts a:focus-visible {
+    background: var(--campus-paper)
+}
+
+.workspace-shortcuts svg {
+    margin-top: 2px;
+    flex: none;
+    color: var(--campus-green)
+}
+
+.workspace-shortcuts strong {
+    display: block;
+    font-size: 11px;
+    font-weight: 500
+}
+
+.workspace-shortcuts small {
+    color: var(--campus-muted);
+    font-size: 9px
+}
+
+.admin-settings {
+    display: grid
+}
+
+.admin-setting-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px 24px;
+    padding: 16px 18px;
+    border-bottom: 1px solid var(--campus-line)
+}
+
+.admin-setting-row:last-child {
+    border-bottom: 0
+}
+
+.admin-setting-row strong {
+    display: block;
+    color: var(--campus-ink);
+    font-size: 12px;
+    font-weight: 500
+}
+
+.admin-setting-row code,
+.edu-table code {
+    color: var(--campus-muted);
+    font: 9px var(--campus-mono)
+}
+
+.admin-setting-form {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    min-width: 0
+}
+
+.admin-setting-form .ui-input {
+    width: min(220px, 100%)
+}
+
+.admin-note {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    margin: 0;
+    padding: 12px 18px
+}
+
+.admin-roles {
+    display: grid;
+    gap: 18px
+}
+
+.admin-role {
+    padding: 18px;
+    border: 1px solid var(--campus-line);
+    background: var(--campus-sheet)
+}
+
+.admin-role header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 12px
+}
+
+.admin-role h2 {
+    margin: 0;
+    font: 400 22px var(--campus-serif)
+}
+
+.admin-role header small {
+    color: var(--campus-muted);
+    font: 9px var(--campus-mono)
+}
+
+.admin-permission-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(210px, 100%), 1fr));
+    gap: 12px
+}
+
+.admin-permission-grid fieldset {
+    display: grid;
+    gap: 6px;
+    margin: 0;
+    padding: 10px 12px;
+    border: 1px solid var(--campus-line)
+}
+
+.admin-permission-grid legend {
+    padding: 0 4px;
+    color: var(--campus-muted);
+    font: 9px var(--campus-mono);
+    letter-spacing: .04em;
+    text-transform: uppercase
+}
+
+.admin-permission-grid .ui-check-wrap span {
+    font: 10px var(--campus-mono);
+    overflow-wrap: anywhere
+}
+
+.admin-role-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 14px
+}
+
+.admin-meta {
+    display: block;
+    max-width: 320px;
+    font: 9px var(--campus-mono);
+    overflow-wrap: anywhere
+}
+
+.admin-pager {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    color: var(--campus-muted);
+    font: 9px var(--campus-mono)
+}
+
+.admin-scope-bar {
+    flex-wrap: wrap
+}
+
+.admin-scope-select {
+    width: min(280px, 100%)
+}
+
+.admin-board td:first-child {
+    font-family: var(--campus-mono);
+    white-space: nowrap
+}
+
+.admin-board td:first-child svg {
+    vertical-align: -2px;
+    color: var(--campus-green)
+}
+
+.admin-bar {
+    display: block;
+    height: 2px;
+    margin-top: 6px;
+    background: var(--campus-green)
+}
+
+.admin-help {
+    margin-bottom: 18px;
+    padding: 20px 22px
+}
+
+.admin-help h2 {
+    margin: 0 0 12px;
+    font: 400 22px var(--campus-serif)
+}
+
+.admin-help ol {
+    display: grid;
+    gap: 12px;
+    margin: 0;
+    padding-left: 20px
+}
+
+.admin-help li strong {
+    color: var(--campus-ink);
+    font-size: 12px;
+    font-weight: 500
+}
+
+.admin-help p {
+    margin: 3px 0 0;
+    color: var(--campus-muted);
+    font-size: 11px;
+    line-height: 1.6
+}
+
+@media (max-width: 640px) {
+    .admin-setting-form {
+        width: 100%
+    }
+
+    .admin-setting-form .ui-input {
+        flex: 1
+    }
+}
+
+.admin-role-note {
+    margin: -4px 0 12px;
+    color: var(--campus-muted);
+    font-size: 10px
+}
+
+.admin-permission-grid fieldset {
+    align-content: start
+}
+
+.admin-board td:first-child {
+    width: 72px
+}

@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session as DbSession
 
 from app.models import ImportJob, Role, SchoolClass, StudentProfile, User
 from app.security import hash_password
+from app.users_service import user_roles
 
 MAX_CSV_BYTES = 2_000_000
 MAX_IMPORT_ROWS = 500
@@ -19,6 +20,14 @@ EMAIL_RE = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
 
 def normalize_header(value: str) -> str:
     return "_".join(value.strip().lower().lstrip("\ufeff").split())
+
+
+def _classes_named(db: DbSession, actor: User | None, course: str) -> list[SchoolClass]:
+    """Classes this actor may import into: any for ADMIN, only their own for everyone else."""
+    query = select(SchoolClass).where(SchoolClass.name == course)
+    if actor is None or "ADMIN" not in user_roles(actor):
+        query = query.where(SchoolClass.teacher_user_id == (actor.id if actor else None))
+    return list(db.scalars(query.order_by(SchoolClass.id)).all())
 
 
 def preview_csv(db: DbSession, actor_id: int, filename: str, content: str) -> tuple[ImportJob, list[dict[str, object]]]:
@@ -35,6 +44,8 @@ def preview_csv(db: DbSession, actor_id: int, filename: str, content: str) -> tu
         raise ValueError(f"CSV is missing required columns: {missing}")
     reader.fieldnames = headers
 
+    actor = db.get(User, actor_id)
+    class_matches: dict[str, int] = {}
     parsed: list[dict[str, object]] = []
     seen_usernames: set[str] = set()
     seen_emails: set[str] = set()
@@ -66,6 +77,11 @@ def preview_csv(db: DbSession, actor_id: int, filename: str, content: str) -> tu
             errors.append("apellido: required, maximum 80 characters")
         if not course or len(course) > 120:
             errors.append("curso: required, maximum 120 characters")
+        else:
+            if course not in class_matches:
+                class_matches[course] = len(_classes_named(db, actor, course))
+            if class_matches[course] > 1:
+                errors.append("curso: several classes share this name; rename them before importing")
         if email and (len(email) > 254 or not EMAIL_RE.fullmatch(email)):
             errors.append("email: invalid address")
         if normalized_email and normalized_email in seen_emails:
@@ -132,15 +148,22 @@ def confirm_import(db: DbSession, job: ImportJob) -> dict[str, object]:
     student_role = db.scalar(select(Role).where(Role.name == "STUDENT"))
     if student_role is None:
         raise HTTPException(status_code=500, detail="student role is missing")
+    actor = db.get(User, job.actor_user_id)
+    is_admin = actor is not None and "ADMIN" in user_roles(actor)
     classes: dict[str, SchoolClass] = {}
     created_class_count = 0
     for row in rows:
         course = str(row["course"])
         school_class = classes.get(course)
         if school_class is None:
-            school_class = db.scalar(select(SchoolClass).where(SchoolClass.name == course, SchoolClass.academic_period == ""))
-            if school_class is None:
-                school_class = SchoolClass(name=course, academic_period="", description="", teacher_user_id=job.actor_user_id)
+            candidates = _classes_named(db, actor, course)
+            if len(candidates) > 1:
+                raise HTTPException(status_code=409, detail=f"class {course} became ambiguous after the preview")
+            if candidates:
+                school_class = candidates[0]
+            else:
+                # Administrators create unassigned classes; instructors always own what they create.
+                school_class = SchoolClass(name=course, academic_period="", description="", teacher_user_id=None if is_admin else job.actor_user_id)
                 db.add(school_class)
                 db.flush()
                 created_class_count += 1

@@ -31,6 +31,7 @@ from app.ctf_service import (
     difficulties,
     duplicate_challenge,
     duplicate_event,
+    ensure_publishable,
     get_event,
     list_challenges,
     list_events,
@@ -42,7 +43,13 @@ from app.ctf_service import (
     student_events,
     update_hint,
 )
-from app.dependencies import current_session, get_db, require_csrf, require_permission
+from app.dependencies import (
+    current_session,
+    get_db,
+    require_csrf,
+    require_password_changed,
+    require_permission,
+)
 from app.models import Category, Challenge, ChallengeFile, CtfEvent, Difficulty, Hint, User
 from app.settings_service import get as get_setting
 from app.users_service import user_roles
@@ -334,6 +341,8 @@ def get_challenge_detail(event_id: int, challenge_id: int, actor: User = Depends
 def post_challenge(event_id: int, payload: ChallengeInput, actor: User = Depends(require_permission("challenge.create")), db: DbSession = Depends(get_db)) -> dict[str, object]:
     event = _get_event(db, actor, event_id)
     try:
+        if payload.status == "PUBLISHED":
+            ensure_publishable(db, None)
         item = save_challenge(db, event, None, **payload.model_dump())
     except ValueError as exc:
         db.rollback()
@@ -347,6 +356,8 @@ def post_challenge(event_id: int, payload: ChallengeInput, actor: User = Depends
 def put_challenge(event_id: int, challenge_id: int, payload: ChallengeInput, actor: User = Depends(require_permission("challenge.update")), db: DbSession = Depends(get_db)) -> dict[str, object]:
     event = _get_event(db, actor, event_id)
     try:
+        if payload.status == "PUBLISHED":
+            ensure_publishable(db, challenge_id)
         item = save_challenge(db, event, challenge_id, **payload.model_dump())
     except LookupError as exc:
         db.rollback()
@@ -526,6 +537,7 @@ def delete_file(file_public_id: str, actor: User = Depends(require_permission("c
 @router.get("/files/{file_public_id}")
 def download_file(file_public_id: str, principal: tuple[User, object] = Depends(current_session), db: DbSession = Depends(get_db)) -> FileResponse:
     actor = principal[0]
+    require_password_changed(actor)
     file = db.query(ChallengeFile).filter(ChallengeFile.public_id == file_public_id).first()
     if file is None:
         raise HTTPException(404, "file not found")

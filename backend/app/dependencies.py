@@ -5,6 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session as DbSession
 
 from app.database import engine
+from app.errors import ApiError
 from app.models import Permission, Role, Session, User
 from app.security import digest_token
 
@@ -32,12 +33,19 @@ def current_session(
     return user, session
 
 
+def require_password_changed(user: User) -> None:
+    """Temporary passwords only unlock the endpoints needed to replace them."""
+    if user.must_change_password:
+        raise ApiError(status.HTTP_403_FORBIDDEN, "PASSWORD_CHANGE_REQUIRED", "password change required")
+
+
 def require_permission(code: str) -> Callable[..., User]:
     def dependency(
         principal: tuple[User, Session] = Depends(current_session),
         db: DbSession = Depends(get_db),
     ) -> User:
         user, _ = principal
+        require_password_changed(user)
         permission = db.scalar(
             select(Role.id).join(Role.permissions).where(Role.users.any(User.id == user.id), Permission.code == code)
         )

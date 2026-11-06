@@ -61,12 +61,17 @@ def update_class(db: DbSession, item: SchoolClass, *, name: str, academic_period
     item.description = description.strip()
 
 
-def replace_students(db: DbSession, item: SchoolClass, student_ids: list[int]) -> list[User]:
+def replace_students(db: DbSession, item: SchoolClass, student_ids: list[int], actor: User) -> list[User]:
     if len(student_ids) != len(set(student_ids)):
         raise ValueError("duplicate student id")
     students = list(db.scalars(select(User).options(selectinload(User.roles)).where(User.id.in_(student_ids), User.is_active.is_(True))).all()) if student_ids else []
     if len(students) != len(student_ids) or any("STUDENT" not in user_roles(student) for student in students):
         raise ValueError("all class members must be active student accounts")
+    if "ADMIN" not in user_roles(actor):
+        # Instructors may reorganise students already in their classes; enrolling anyone else is an administrator task.
+        in_scope: set[int] = set(db.scalars(select(class_students.c.student_user_id).join(SchoolClass, class_students.c.class_id == SchoolClass.id).where(SchoolClass.teacher_user_id == actor.id)).all())
+        if any(student.id not in in_scope for student in students):
+            raise ValueError("students must already belong to one of your classes")
     item.students = students
     return students
 

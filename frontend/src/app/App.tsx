@@ -19,7 +19,6 @@ import {
   Badge,
   Button,
   CommandPalette,
-  EmptyState,
   Skeleton,
   ToastProvider,
   toast,
@@ -34,6 +33,9 @@ import { CtfManagementPage } from "./ctf-management";
 import { TeachingAnalyticsPage } from "./teaching-analytics";
 import { ChallengeImporterPage } from "./challenge-importer";
 import { ChallengePlayPage, StudentDashboard, StudentEventsPage, StudentScoreboardPage } from "./student";
+import { AuditPage, HelpPage, RolesPage, SettingsPage, StaffScoreboardPage } from "./administration";
+import { CurriculumStudioPage } from "../features/curriculum/CurriculumStudio";
+import { LearnCoursePage, LearnHomePage, LearnLessonPage } from "../features/curriculum/LearnPages";
 
 export const queryClient = new QueryClient({
   defaultOptions: { queries: { refetchOnWindowFocus: false, retry: 1 } },
@@ -107,10 +109,16 @@ function AppShell() {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+  const isStudent = user?.roles.includes("STUDENT") === true;
   const visibleRoutes = routes.filter(
-    (route) => !route.permission || can(route.permission),
+    (route) =>
+      (!route.permission || can(route.permission)) &&
+      (route.audience !== "student" || isStudent),
   );
-  const current = routes.find((route) => route.path === location.pathname);
+  // Nested pages (a lesson inside /learn, for example) belong to their closest section in the breadcrumb.
+  const current = routes
+    .filter((route) => location.pathname === route.path || location.pathname.startsWith(`${route.path}/`))
+    .sort((a, b) => b.path.length - a.path.length)[0];
   const commandItems = useMemo(
     () =>
       visibleRoutes.map((route) => ({
@@ -205,7 +213,7 @@ function AppShell() {
         <footer className="workspace-footer">
           <span>CYBERLAB &nbsp;·&nbsp; CUADERNO DE APRENDIZAJE</span>
           <span>
-            SESIÓN CIFRADA <i />
+            {window.location.protocol === "https:" ? "SESIÓN CIFRADA" : "SESIÓN ACTIVA"} <i />
           </span>
         </footer>
       </div>
@@ -218,131 +226,123 @@ function AppShell() {
   );
 }
 
-function WorkspacePage({
-  title,
-  description,
-  phase,
-}: {
-  title: string;
-  description: string;
-  phase: number;
-}) {
-  const { user } = useAuth();
-  const { pathname } = useLocation();
-  if (pathname === "/workspace" && user?.roles.includes("STUDENT")) return <StudentDashboard />;
-  if (pathname === "/workspace")
-    return (
-      <>
-        <div className="workspace-edition">
-          <span>
-            CUADERNO PERSONAL &nbsp; / &nbsp; {user?.roles?.join(" · ")}
-          </span>
-          <span>01 — 12</span>
-        </div>
-        <section className="workspace-welcome">
-          <div>
-            <p className="page-eyebrow">TU PRÓXIMO DESCUBRIMIENTO</p>
-            <h1>
-              Hola, {user?.display_name?.split(" ")[0] ?? user?.username}.
-            </h1>
-            <p>
-              El laboratorio está listo. Elige una práctica y empieza a
-              investigar.
-            </p>
-          </div>
-          <div className="welcome-seal">
-            <BookOpen size={25} />
-            <span>
-              APRENDER
-              <br />
-              HACIENDO
-            </span>
-          </div>
-        </section>
-        <div className="workspace-content-grid">
-          <article className="workspace-feature">
-            <span className="feature-number">01 / CUADERNO ABIERTO</span>
-            <h2>
-              Todo comienza
-              <br />
-              con una pregunta.
-            </h2>
-            <p>
-              Explora las señales, toma notas y avanza a tu propio ritmo. Cada
-              reto te acerca a una nueva forma de entender la seguridad digital.
-            </p>
-            <Button
-              onClick={() =>
-                toast("El catálogo de prácticas llegará en la Fase 4.")
-              }
-            >
-              Explorar prácticas <span aria-hidden="true">↗</span>
-            </Button>
-            <div className="feature-illustration">
-              <div className="feature-orbit feature-orbit-a" />
-              <div className="feature-orbit feature-orbit-b" />
-              <span>?</span>
-            </div>
-          </article>
-          <aside className="workspace-side-note">
-            <div className="side-note-top">
-              <span>ESTADO DEL RECORRIDO</span>
-              <Badge status="live">En marcha</Badge>
-            </div>
-            <h3>Tu espacio de aprendizaje</h3>
-            <p>
-              Has iniciado sesión como {user?.username}. Aquí aparecerán tus
-              retos, avances y actividad de clase cuando se habiliten en las
-              siguientes fases.
-            </p>
-            <div className="note-divider" />
-            <span className="next-step-label">SIGUIENTE EN EL PROYECTO</span>
-            <strong>Perfiles y clases</strong>
-            <small>
-              FASE {phase + 1} &nbsp;·&nbsp; ADMINISTRACIÓN EDUCATIVA
-            </small>
-          </aside>
-        </div>
-        <section className="permission-note">
-          <span>PERMISOS DE ESTA SESIÓN</span>
-          <p>
-            {user?.permissions?.length
-              ? user.permissions.map((permission) => (
-                  <code key={permission}>{permission}</code>
-                ))
-              : "Sin permisos asignados."}
-          </p>
-        </section>
-      </>
-    );
+function StaffWorkspace() {
+  const { user, can } = useAuth();
+  const navigate = useNavigate();
+  const shortcuts = routes.filter(
+    (route) =>
+      route.path !== "/workspace" &&
+      route.path !== "/help" &&
+      route.audience !== "student" &&
+      (!route.permission || can(route.permission)),
+  );
+  const primary = can("event.manage")
+    ? { path: "/teaching/ctf", label: "Diseñar una práctica" }
+    : { path: "/users", label: "Ver el directorio" };
   return (
     <>
       <div className="workspace-edition">
-        <span>CYBERLAB &nbsp; / &nbsp; ESPACIO DE TRABAJO</span>
-        <span>FASE {phase}</span>
+        <span>
+          CUADERNO DE TRABAJO &nbsp; / &nbsp; {user?.roles?.join(" · ")}
+        </span>
+        <span>{new Date().toLocaleDateString()}</span>
       </div>
-      <header className="workspace-page-heading">
-        <p className="page-eyebrow">ÁREA DE APRENDIZAJE</p>
-        <h1>{title}</h1>
-        <p>{description}</p>
-      </header>
-      <div className="planned-feature">
-        <EmptyState
-          title="Esta sección se está preparando"
-          description={`Su implementación corresponde a la Fase ${phase} del plan de Cyberlab.`}
-        />
+      <section className="workspace-welcome">
+        <div>
+          <p className="page-eyebrow">TU ESPACIO DOCENTE</p>
+          <h1>Hola, {user?.display_name ?? user?.username}.</h1>
+          <p>Prepara prácticas, acompaña a tus clases y revisa sus avances.</p>
+        </div>
+        <div className="welcome-seal">
+          <BookOpen size={25} />
+          <span>
+            APRENDER
+            <br />
+            HACIENDO
+          </span>
+        </div>
+      </section>
+      <div className="workspace-content-grid">
+        <article className="workspace-feature">
+          <span className="feature-number">01 / CUADERNO ABIERTO</span>
+          <h2>
+            Todo comienza
+            <br />
+            con una pregunta.
+          </h2>
+          <p>
+            Diseña un reto, asígnalo a una clase y observa cómo cada estudiante
+            avanza a su propio ritmo.
+          </p>
+          <Button onClick={() => navigate(primary.path)}>
+            {primary.label} <span aria-hidden="true">↗</span>
+          </Button>
+          <div className="feature-illustration">
+            <div className="feature-orbit feature-orbit-a" />
+            <div className="feature-orbit feature-orbit-b" />
+            <span>?</span>
+          </div>
+        </article>
+        <aside className="workspace-side-note">
+          <div className="side-note-top">
+            <span>ACCESOS DE TU PERFIL</span>
+            <Badge status="live">En marcha</Badge>
+          </div>
+          <nav className="workspace-shortcuts" aria-label="Accesos rápidos">
+            {shortcuts.map((route) => {
+              const Icon = route.icon;
+              return (
+                <Link key={route.path} to={route.path}>
+                  <Icon size={15} />
+                  <span>
+                    <strong>{route.label}</strong>
+                    <small>{route.description}</small>
+                  </span>
+                </Link>
+              );
+            })}
+          </nav>
+        </aside>
       </div>
     </>
   );
 }
 
+function WorkspaceHome() {
+  const { user } = useAuth();
+  return user?.roles.includes("STUDENT") ? <StudentDashboard /> : <StaffWorkspace />;
+}
+
+/** Learners and staff share these paths; staff see the management view of the same data. */
+function SharedRoute({ path }: { path: string }) {
+  const { user } = useAuth();
+  if (user?.roles.includes("STUDENT")) {
+    if (path === "/learn") return <LearnHomePage />;
+    return path === "/scoreboard" ? <StudentScoreboardPage /> : <StudentEventsPage />;
+  }
+  if (path === "/scoreboard") return <StaffScoreboardPage />;
+  return <Navigate to={path === "/learn" ? "/teaching/curriculum" : "/teaching/ctf"} replace />;
+}
+
+const pages: Record<string, ReactNode> = {
+  "/learn": <SharedRoute path="/learn" />,
+  "/teaching/curriculum": <CurriculumStudioPage />,
+  "/users": <PeoplePage />,
+  "/classes": <ClassManagementPage />,
+  "/teaching/ctf": <CtfManagementPage />,
+  "/teaching/analytics": <TeachingAnalyticsPage />,
+  "/teaching/importer": <ChallengeImporterPage />,
+  "/events": <SharedRoute path="/events" />,
+  "/challenges": <SharedRoute path="/challenges" />,
+  "/scoreboard": <SharedRoute path="/scoreboard" />,
+  "/settings": <SettingsPage />,
+  "/roles": <RolesPage />,
+  "/audit": <AuditPage />,
+  "/help": <HelpPage />,
+};
+
 function Workspaces() {
   return <RoutesView />;
-}
-function StudentOrWorkspace({ path, title, description, phase }: { path: string; title: string; description: string; phase: number }) {
-  const { user } = useAuth();
-  if (user?.roles.includes("STUDENT")) return path === "/scoreboard" ? <StudentScoreboardPage /> : <StudentEventsPage />;
-  return <WorkspacePage title={title} description={description} phase={phase} />;
 }
 function RoutesView() {
   return (
@@ -350,16 +350,7 @@ function RoutesView() {
       <Route element={<Guard />}>
         <Route element={<AppShell />}>
           <Route index element={<Navigate to="/workspace" replace />} />
-          <Route
-            path="workspace"
-            element={
-              <WorkspacePage
-                title="Mi espacio"
-                description="Tu cuaderno personal."
-                phase={2}
-              />
-            }
-          />
+          <Route path="workspace" element={<WorkspaceHome />} />
           {routes
             .filter((route) => route.path !== "/workspace")
             .map((route) => (
@@ -368,32 +359,15 @@ function RoutesView() {
                 path={route.path.slice(1)}
                 element={<Guard permission={route.permission} />}
               >
-                <Route
-                  index
-                  element={
-                    route.path === "/users" ? (
-                      <PeoplePage />
-                    ) : route.path === "/classes" ? (
-                      <ClassManagementPage />
-                    ) : route.path === "/teaching/ctf" ? (
-                      <CtfManagementPage />
-                    ) : route.path === "/teaching/analytics" ? (
-                      <TeachingAnalyticsPage />
-                    ) : route.path === "/teaching/importer" ? (
-                      <ChallengeImporterPage />
-                    ) : route.path === "/events" || route.path === "/challenges" || route.path === "/scoreboard" ? (
-                      <StudentOrWorkspace path={route.path} title={route.label} description={route.description} phase={route.phase} />
-                    ) : (
-                      <WorkspacePage
-                        title={route.label}
-                        description={route.description}
-                        phase={route.phase}
-                      />
-                    )
-                  }
-                />
+                <Route index element={pages[route.path] ?? <NotFoundPage />} />
               </Route>
             ))}
+          <Route path="learn/courses/:publicId" element={<Guard permission="course.view" />}>
+            <Route index element={<LearnCoursePage />} />
+          </Route>
+          <Route path="learn/lessons/:publicId" element={<Guard permission="course.view" />}>
+            <Route index element={<LearnLessonPage />} />
+          </Route>
           <Route path="import" element={<Guard permission="import.preview" />}>
             <Route index element={<ImportPage />} />
           </Route>

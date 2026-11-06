@@ -13,6 +13,8 @@ from app.models import (
     SystemSetting,
     User,
 )
+from app.modules.curriculum import permissions as curriculum_permissions
+from app.modules.curriculum.seed_plan import seed_curriculum_plan
 from app.scoring_service import add_flag
 from app.security import hash_password
 from app.settings_service import DEFAULTS
@@ -52,11 +54,15 @@ PERMISSIONS = {
     "import.preview": "Preview student CSV imports",
     "import.execute": "Confirm student CSV imports",
 }
+PERMISSIONS.update(curriculum_permissions.PERMISSIONS)
 ROLE_PERMISSIONS = {
     "ADMIN": list(PERMISSIONS),
     "INSTRUCTOR": ["scoreboard.view", "scoreboard.manage", "challenge.view", "challenge.create", "challenge.update", "category.create", "category.update", "difficulty.create", "difficulty.update", "event.view", "event.manage", "settings.view", "user.view", "user.create", "user.update", "class.view", "class.create", "class.update", "class.manage_students", "import.preview", "import.execute"],
     "STUDENT": ["challenge.view", "challenge.submit", "scoreboard.view", "event.view"],
 }
+for _role, _codes in curriculum_permissions.DEFAULT_GRANTS.items():
+    ROLE_PERMISSIONS[_role] += _codes
+ROLE_PERMISSIONS["ADMIN"] = list(PERMISSIONS)
 
 
 def seed() -> None:
@@ -64,12 +70,14 @@ def seed() -> None:
         raise RuntimeError("ADMIN_PASSWORD must be set before seeding")
     with OrmSession(engine) as db:
         permissions: dict[str, Permission] = {}
+        introduced: set[str] = set()
         for code, description in PERMISSIONS.items():
             item = db.scalar(select(Permission).where(Permission.code == code))
             if item is None:
                 item = Permission(code=code, description=description)
                 db.add(item)
                 db.flush()
+                introduced.add(code)
             permissions[code] = item
         roles: dict[str, Role] = {}
         for name, permission_codes in ROLE_PERMISSIONS.items():
@@ -77,8 +85,14 @@ def seed() -> None:
             if role is None:
                 role = Role(name=name, is_system=True)
                 db.add(role)
+                role.permissions = [permissions[code] for code in permission_codes]
+            elif name == "ADMIN":
+                role.permissions = [permissions[code] for code in permission_codes]
+            else:
+                # INSTRUCTOR/STUDENT keep what an administrator configured in «Roles»; only permissions that
+                # did not exist before this run (a new release) receive their default grant, once.
+                role.permissions += [permissions[code] for code in permission_codes if code in introduced and permissions[code] not in role.permissions]
             role.is_system = True
-            role.permissions = [permissions[code] for code in permission_codes]
             roles[name] = role
         user = db.scalar(select(User).where(User.username == settings.admin_username))
         if user is None:
@@ -95,7 +109,7 @@ def seed() -> None:
         for index, (min_score, grade_value, label) in enumerate(((0, 1.0, "Insuficiente"), (50, 2.0, "Básico"), (100, 3.0, "Intermedio"), (150, 4.0, "Avanzado"), (200, 5.0, "Excelente"))):
             if db.scalar(select(GradeScale.id).where(GradeScale.name == "Escala base", GradeScale.min_score == min_score)) is None:
                 db.add(GradeScale(name="Escala base", min_score=min_score, grade_value=grade_value, label=label, sort_order=index))
-        for index, name in enumerate(("Web", "Criptografía", "Forense", "Ingeniería inversa", "Explotación", "Miscelánea")):
+        for index, name in enumerate(("Web", "Criptografía", "Forense", "Ingeniería inversa", "Explotación", "Miscelánea", "Linux", "Redes", "Seguridad general")):
             if db.scalar(select(Category.id).where(Category.name == name)) is None:
                 db.add(Category(name=name, color="#587666", sort_order=index, multiplier=1.0))
         for index, (name, multiplier) in enumerate((("Inicial", 0.75), ("Intermedio", 1.0), ("Avanzado", 1.5), ("Experto", 2.0))):
@@ -130,6 +144,7 @@ def seed() -> None:
                 db.add(challenge)
                 db.flush()
                 add_flag(db, challenge, "STATIC", flag_value, None)
+        seed_curriculum_plan(db)
         db.commit()
 
 

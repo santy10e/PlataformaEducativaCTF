@@ -283,18 +283,22 @@ def use_hint(db: Session, user: User, challenge: Challenge, hint_id: int) -> dic
     return {"id": next_hint.id, "content_markdown": next_hint.content_markdown, "cost": next_hint.cost, "order": next_hint.order}
 
 
+def elapsed_seconds(row: ChallengeProgress) -> int:
+    """Active time on a challenge: wall clock since start minus every pause, frozen at completion."""
+    end = row.completed_at or now_utc()
+    paused = row.total_paused_seconds
+    if row.paused_at is not None:
+        paused += max(0, int((end - row.paused_at).total_seconds()))
+    return max(0, int((end - row.started_at).total_seconds()) - paused)
+
+
 def progress_for_student(db: Session, user: User, challenge: Challenge) -> dict[str, object]:
     row = _progress(db, user, challenge, False)
     attempts = db.scalar(select(func.count()).select_from(ChallengeSubmission).where(ChallengeSubmission.user_id == user.id, ChallengeSubmission.challenge_id == challenge.id)) or 0
     hints = db.scalar(select(func.count()).select_from(HintUse).where(HintUse.user_id == user.id, HintUse.challenge_id == challenge.id)) or 0
     if row is None:
         return {"started_at": None, "completed_at": None, "elapsed_seconds": 0, "attempts": attempts, "hints_used": hints, "paused": False}
-    end = row.completed_at or now_utc()
-    paused = row.total_paused_seconds
-    if row.paused_at is not None:
-        paused += max(0, int((end - row.paused_at).total_seconds()))
-    elapsed = max(0, int((end - row.started_at).total_seconds()) - paused)
-    return {"started_at": row.started_at, "completed_at": row.completed_at, "elapsed_seconds": elapsed, "attempts": attempts, "hints_used": hints, "paused": row.paused_at is not None}
+    return {"started_at": row.started_at, "completed_at": row.completed_at, "elapsed_seconds": elapsed_seconds(row), "attempts": attempts, "hints_used": hints, "paused": row.paused_at is not None}
 
 
 def pause_progress(db: Session, user_id: int, challenge: Challenge, paused: bool) -> ChallengeProgress:

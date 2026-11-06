@@ -11,11 +11,11 @@ Verifica que `.env` exista, que las contraseñas obligatorias estén definidas y
 
 ## Health devuelve 503
 
-Comprueba `docker compose ps mysql`, espera a que MySQL termine su inicialización y revisa `docker compose logs --tail=100 mysql backend`. Confirma que `MYSQL_DATABASE`, `MYSQL_USER` y `MYSQL_PASSWORD` coincidan con las credenciales de `DATABASE_URL`. Para cambios de esquema aplica `docker compose exec backend uv run alembic upgrade head`.
+Comprueba `docker compose ps mysql`, espera a que MySQL termine su inicialización y revisa `docker compose logs --tail=100 mysql backend`. Confirma que `MYSQL_DATABASE`, `MYSQL_USER` y `MYSQL_PASSWORD` coincidan con las credenciales de `DATABASE_URL`. El backend aplica las migraciones al arrancar; si una falla, el contenedor se detiene y el error aparece en `docker compose logs backend`.
 
 ## Login no funciona
 
-Confirma `ADMIN_USERNAME`/`ADMIN_PASSWORD` y que el seed haya terminado. La limitación temporal de intentos devuelve 429; espera cinco minutos. No restaures ni reinicies la base para solucionar un bloqueo de login.
+Confirma `ADMIN_USERNAME`/`ADMIN_PASSWORD` y que el seed haya terminado (`make seed`). La limitación temporal de intentos devuelve 429 tras 8 fallos desde el mismo equipo para la misma cuenta; espera cinco minutos o entra desde otro equipo. Si la cuenta tiene contraseña temporal, la aplicación pide cambiarla antes de mostrar nada más. No restaures ni reinicies la base para solucionar un bloqueo de login.
 
 ## Adjuntos no cargan
 

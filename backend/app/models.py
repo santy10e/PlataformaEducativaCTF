@@ -9,6 +9,7 @@ from sqlalchemy import (
     DateTime,
     Float,
     ForeignKey,
+    Index,
     Integer,
     String,
     Table,
@@ -259,6 +260,7 @@ class ChallengeProgress(Base):
 
 class ChallengeSubmission(Timestamped, Base):
     __tablename__ = "challenge_submissions"
+    __table_args__ = (Index("ix_challenge_submissions_user_challenge", "user_id", "challenge_id"),)
     id: Mapped[int] = mapped_column(ID_TYPE, primary_key=True, autoincrement=True)
     user_id: Mapped[int] = mapped_column(ID_TYPE, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     challenge_id: Mapped[int] = mapped_column(ID_TYPE, ForeignKey("challenges.id", ondelete="CASCADE"), nullable=False, index=True)
@@ -352,3 +354,7 @@ class Hint(Timestamped, Base):
     cost: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     content_markdown: Mapped[str] = mapped_column(Text, nullable=False)
     challenge: Mapped[Challenge] = relationship(back_populates="hints")
+
+
+# Domain-module tables register on the same metadata (Alembic autogenerate and tests rely on it).
+from app.modules.curriculum import models as _curriculum_models  # noqa: F401

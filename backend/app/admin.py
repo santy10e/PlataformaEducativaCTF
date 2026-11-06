@@ -46,6 +46,8 @@ def update_role(role_id: int, payload: RoleInput, actor: User = Depends(require_
         raise HTTPException(status_code=404, detail="role not found")
     if role.is_system and role.name != payload.name:
         raise HTTPException(status_code=403, detail="system role name is protected")
+    if role.name == "ADMIN":
+        raise HTTPException(status_code=403, detail="administrator role permissions are protected")
     permissions = list(db.scalars(select(Permission).where(Permission.code.in_(payload.permissions))).all()) if payload.permissions else []
     if len(permissions) != len(set(payload.permissions)):
         raise HTTPException(status_code=422, detail="unknown permission")

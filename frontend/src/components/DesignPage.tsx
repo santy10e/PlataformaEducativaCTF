@@ -147,11 +147,11 @@ export function DesignPage() {
         </div>
         <div className="token-strip">
           {[
-            ["Papel", "#f4f0e7"],
-            ["Tinta", "#182729"],
-            ["Señal", "#16e654"],
-            ["Sombra de hoja", "#dbe0d6"],
-            ["Línea", "#cbd0c7"],
+            ["Navy principal", "#142550"],
+            ["Cyan", "#1BAEC3"],
+            ["Texto", "#172033"],
+            ["Fondo secundario", "#F5F7FA"],
+            ["Línea", "#D9E1EA"],
           ].map(([name, color]) => (
             <div className="token-chip" key={name}>
               <i style={{ background: color }} />

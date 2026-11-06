@@ -12,6 +12,7 @@ from app.models import (
     Category,
     Challenge,
     ChallengeFile,
+    ChallengeFlag,
     CtfEvent,
     Difficulty,
     Hint,
@@ -96,14 +97,22 @@ def save_event(db: DbSession, actor: User, item_id: int | None, *, name: str, st
         raise ValueError("max attempts must be between 1 and 1000")
     if ends_at and starts_at and ends_at <= starts_at:
         raise ValueError("event end must be later than start")
+    if item_id is not None and get_event(db, actor, item_id) is None:
+        # Same answer for "missing" and "someone else's": never reveal other teachers' events.
+        raise LookupError("event not found")
     classes = list(db.scalars(select(SchoolClass).where(SchoolClass.id.in_(set(class_ids)))).all()) if class_ids else []
     if len(classes) != len(set(class_ids)):
         raise ValueError("one or more classes were not found")
-    if not _admin(actor) and any(item.teacher_user_id != actor.id for item in classes):
-        raise PermissionError("you can only assign classes you teach")
     event = db.get(CtfEvent, item_id) if item_id is not None else CtfEvent(public_id=str(uuid4()))
     if event is None or event.deleted_at is not None:
         raise LookupError("event not found")
+    if not _admin(actor):
+        if any(item.teacher_user_id != actor.id for item in classes):
+            raise PermissionError("you can only assign classes you teach")
+        if not classes:
+            raise ValueError("assign at least one class you teach so you keep access to the event")
+        # Classes of other teachers on a shared event are not the actor's to remove.
+        classes = [item for item in event.classes if item.teacher_user_id != actor.id] + classes
     event.name = name.strip()
     event.status = status
     event.visibility = visibility
@@ -157,7 +166,8 @@ def _check_prerequisites(db: DbSession, event_id: int, challenge_id: int | None,
     if any(item.event_id != event_id for item in required):
         raise ValueError("prerequisites must belong to the same event")
     if challenge_id is not None:
-        graph = {item.id: [parent.id for parent in item.prerequisites] for item in db.scalars(select(Challenge).options(selectinload(Challenge.prerequisites))).all()}
+        # Prerequisites never cross events, so the event's own challenges are the whole graph.
+        graph = {item.id: [parent.id for parent in item.prerequisites] for item in db.scalars(select(Challenge).options(selectinload(Challenge.prerequisites)).where(Challenge.event_id == event_id)).all()}
         graph[challenge_id] = [item.id for item in required]
         def reaches(node: int, target: int, seen: set[int]) -> bool:
             if node == target:
@@ -208,6 +218,18 @@ def save_challenge(db: DbSession, event: CtfEvent, item_id: int | None, *, categ
     db.add(item)
     db.flush()
     return item
+
+
+def enabled_flag_count(db: DbSession, challenge_id: int | None) -> int:
+    if challenge_id is None:
+        return 0
+    return int(db.scalar(select(func.count()).select_from(ChallengeFlag).where(ChallengeFlag.challenge_id == challenge_id, ChallengeFlag.enabled.is_(True))) or 0)
+
+
+def ensure_publishable(db: DbSession, challenge_id: int | None) -> None:
+    """A published challenge without a flag can never be solved, so refuse it up front."""
+    if enabled_flag_count(db, challenge_id) == 0:
+        raise ValueError("add at least one flag before publishing the challenge")
 
 
 def list_challenges(db: DbSession, event: CtfEvent, *, include_archived: bool = False) -> list[Challenge]:
@@ -263,7 +285,7 @@ def duplicate_challenge(db: DbSession, event: CtfEvent, source: Challenge) -> Ch
 
 
 def duplicate_event(db: DbSession, actor: User, source: CtfEvent) -> CtfEvent:
-    item = save_event(db, actor, None, name=f"Copy of {source.name}"[:160], status="DRAFT", visibility=source.visibility, mode=source.mode, rules_markdown=source.rules_markdown, starts_at=source.starts_at, ends_at=source.ends_at, class_ids=[x.id for x in source.classes], scoring_strategy=source.scoring_strategy, scoring_config=dict(source.scoring_config), max_attempts=source.max_attempts)
+    item = save_event(db, actor, None, name=f"Copy of {source.name}"[:160], status="DRAFT", visibility=source.visibility, mode=source.mode, rules_markdown=source.rules_markdown, starts_at=source.starts_at, ends_at=source.ends_at, class_ids=[x.id for x in source.classes if _admin(actor) or x.teacher_user_id == actor.id], scoring_strategy=source.scoring_strategy, scoring_config=dict(source.scoring_config), max_attempts=source.max_attempts)
     source_challenges = list_challenges(db, source, include_archived=True)
     clones = {challenge.id: duplicate_challenge(db, item, challenge) for challenge in source_challenges if challenge.deleted_at is None}
     for challenge in source_challenges:

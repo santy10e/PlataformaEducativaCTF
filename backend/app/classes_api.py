@@ -129,7 +129,7 @@ def put_students(class_id: int, payload: ClassStudentsInput, actor: User = Depen
     if item is None:
         raise HTTPException(status_code=404, detail="class not found")
     try:
-        students = replace_students(db, item, payload.student_ids)
+        students = replace_students(db, item, payload.student_ids, actor)
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     audit.log(db, "CLASS_STUDENTS_MODIFIED", actor.id, "class", str(item.id), {"student_count": len(students)})

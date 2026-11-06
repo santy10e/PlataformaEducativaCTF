@@ -9,3 +9,7 @@ dist/
 coverage/
 *.py[cod]
 backend/migration-test.db
+*.tsbuildinfo
+frontend/test-results/
+frontend/playwright-report/
+backups/

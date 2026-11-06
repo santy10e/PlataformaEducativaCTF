@@ -10,7 +10,7 @@ test('la sesión real permite entrar al espacio y cerrarla', async ({ page }) =>
   await page.getByLabel('Contraseña').fill(password!)
   await page.getByRole('button', { name: /entrar al campus/i }).click()
   await expect(page.getByRole('heading', { name: /hola,/i })).toBeVisible()
-  await expect(page.getByText('SESIÓN CIFRADA')).toBeVisible()
+  await expect(page.getByText(/SESIÓN (CIFRADA|ACTIVA)/)).toBeVisible()
   await page.getByRole('button', { name: 'Cerrar sesión' }).click()
   await expect(page.getByRole('heading', { name: 'Iniciar sesión' })).toBeVisible()
 })

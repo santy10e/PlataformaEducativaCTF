@@ -39,14 +39,17 @@ class ChangePasswordInput(BaseModel):
 @router.post("/auth/login", response_model=LoginOutput)
 def login(payload: LoginInput, request: Request, response: Response, db: DbSession = Depends(get_db)) -> dict[str, object]:
     ip = request.client.host if request.client else "unknown"
-    if not login_limiter.allow("user:" + payload.username.casefold(), "ip:" + ip):
+    limiter_keys = (f"ipuser:{ip}|{payload.username.casefold()}", f"ip:{ip}")
+    if login_limiter.blocked(*limiter_keys):
         raise HTTPException(status_code=429, detail="too many login attempts")
     result = authenticate(db, payload.username, payload.password, ip, request.headers.get("user-agent"))
     if result is None:
+        login_limiter.allow(*limiter_keys)
         audit.log(db, "LOGIN_FAILED", meta={"username": payload.username[:80], "ip": ip})
         db.commit()
         raise HTTPException(status_code=401, detail="invalid credentials")
     user, session, cookie, csrf = result
+    login_limiter.reset(limiter_keys[0])
     action = "ADMIN_LOGIN" if any(role.name == "ADMIN" for role in user.roles) else "LOGIN"
     audit.log(db, action, user.id, "session", str(session.id))
     db.commit()
@@ -79,11 +82,14 @@ def me(principal: tuple[User, Session] = Depends(current_session)) -> dict[str, 
 
 @router.post("/auth/change-password", dependencies=[Depends(require_csrf)])
 def change_password(payload: ChangePasswordInput, principal: tuple[User, Session] = Depends(current_session), db: DbSession = Depends(get_db)) -> dict[str, bool]:
-    user, _session = principal
+    user, current = principal
     if not verify_password(user.password_hash, payload.current_password):
         raise HTTPException(status_code=403, detail="current password does not match")
     user.password_hash = hash_password(payload.new_password)
     user.must_change_password = False
+    now = datetime.now(UTC).replace(tzinfo=None)
+    for other in db.scalars(select(Session).where(Session.user_id == user.id, Session.revoked_at.is_(None), Session.id != current.id)).all():
+        other.revoked_at = now
     audit.log(db, "PASSWORD_CHANGED", user.id, "user", str(user.id))
     db.commit()
     return {"ok": True}

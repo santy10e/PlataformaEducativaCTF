@@ -5,9 +5,10 @@ export default defineConfig({
   fullyParallel: false,
   retries: 0,
   reporter: 'list',
-  use: { baseURL: 'http://127.0.0.1:5174', trace: 'retain-on-failure' },
+  // CYBERLAB_E2E_BASE_URL targets a running stack (for example http://localhost); otherwise a Vite dev server proxies to it.
+  use: { baseURL: process.env.CYBERLAB_E2E_BASE_URL ?? 'http://127.0.0.1:5174', trace: 'retain-on-failure' },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
-  webServer: {
+  webServer: process.env.CYBERLAB_E2E_BASE_URL ? undefined : {
     command: 'npm run dev -- --host 127.0.0.1 --port 5174',
     url: 'http://127.0.0.1:5174/login',
     reuseExistingServer: !process.env.CI,
